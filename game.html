@@ -14,6 +14,9 @@
 		</div>
 
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.0.0/pixi.min.js"></script>
+		<script src="js/pixi-particles.js"></script>
+		<script src="js/ParticleExample.js"></script>
+		
 		<script>
 			var dragBool = false;
 			var gameOver = false;
@@ -26,7 +29,11 @@
 			var missileCount = 0; //idx = count--;
 			var enemyCount = 0; //idx = count--;
 
+			var particles = [];
+
 		    function init() {
+
+
 		    	var interactive = true;
 		    	stage = new PIXI.Container(); //represents a collection of display objects as well as the stage (display object)
 		    	renderer = PIXI.autoDetectRenderer( //uses WebGLRenderer by default, if fail, uses canvasRenderer
@@ -65,7 +72,8 @@
 			stage.addChild(mid);
 
 			//player image
-			var playerTexture = PIXI.Texture.fromImage('images/player.png');
+			var playerType = localStorage.getItem("playerType");
+			var playerTexture = PIXI.Texture.fromImage(playerType);
 			player = new PIXI.Sprite(playerTexture);
 			player.interactive = true;
 			
@@ -73,7 +81,7 @@
 			player.scale.set(0.8);
 			player.on('mousedown', onDragStart).on('mousemove', onDragMove);
 
-			player.position.x = 200;
+			player.position.x = 600;
 			player.position.y = 540; //540-max 400-min
 			stage.addChild(player);
 
@@ -81,9 +89,9 @@
 
 
 			//renderer.render(stage);
-				if(gameOver==false){
-					requestAnimationFrame(update);  
-		   	 	}
+				
+			requestAnimationFrame(update);  
+		   	 	
 		    }
 
 		    function onDragStart(event){
@@ -122,7 +130,7 @@
 
 			function shootMissile(){
 				console.log("shoot!");
-				var missileTexture = PIXI.Texture.fromImage("images/missile.png");
+				var missileTexture = PIXI.Texture.fromImage("images/torpedo.png");
 				var missile = new PIXI.Sprite(missileTexture);
 				missile.position.x = newPosition.x - 25;
 				missile.position.y = newPosition.y - 90;
@@ -146,13 +154,16 @@
 						//stopMissile(requestAnimationFrame(updateMissiles)); //not working?
 					}
 					
-					//checks for the collision with enemy ships
+					//checks for missile collision with enemy ships
 					var eIdx = enemyCount - 1;
 						if(missilesShot[missileIdx].position.y >= (enemiesSpawned[eIdx].position.y - 5) && missilesShot[missileIdx].position.y <= (enemiesSpawned[eIdx].position.y + 5) && missilesShot[missileIdx].position.x >= (enemiesSpawned[eIdx].position.x - 30) && missilesShot[missileIdx].position.x <= (enemiesSpawned[eIdx].position.x + 30)){
 							
 							stage.removeChild(missilesShot[missileIdx]);
 							stage.removeChild(enemiesSpawned[eIdx]);
-							console.log("enemiesSpawned: "+enemiesSpawned.length);
+
+							explosion(missilesShot[missileIdx].position.x, missilesShot[missileIdx].position.y);
+							
+							//console.log("enemiesSpawned: "+enemiesSpawned.length);
 							//enemiesSpawned.shift();
 						}
 					
@@ -194,11 +205,12 @@
 			            }			            
 			            else if(newPosition.y-5 <= enemy.position.y && enemy.position.y <= newPosition.y+5 && newPosition.x-50 <= enemy.position.x && enemy.position.x <= newPosition.x+50){ //when enemy collides with player
 			            	console.log("game over");
-			            	//alert("game over");
-			            	gameOver = true;
 			            	stage.removeChild(player);
 			            	stage.removeChild(enemy);
-			            	
+			            	explosion(enemy.position.x, enemy.position.y);
+			            	gameOver = true;
+
+			            				            	
 			            }
 
 			            if(gameOver == false){
@@ -206,13 +218,90 @@
 							return requestAnimationFrame(updateEnemies);
 						}
 						else{
-							return 0;
+							
+
+							showGameOverScreen();
+							//return 0;
 						}
 			        });
 			    if(gameOver==false){    
 					setTimeout(spawnEnemies, 2000);
 				}
 			}
+
+			function explosion(x, y){
+				var explosionTexture = PIXI.Texture.fromImage("images/explosion.png");
+				var explosion = new PIXI.Sprite(explosionTexture);
+				explosion.position.x = x;
+				explosion.position.y = y;
+				stage.addChild(explosion);
+
+				requestAnimationFrame(function updateExplosion(){
+					explosion.alpha -= 0.05;
+
+					if(explosion.alpha > 0.0){
+						return requestAnimationFrame(updateExplosion);
+					}
+					else{
+						stage.removeChild(explosion);
+					}
+				});
+			}
+
+			function showGameOverScreen(){
+
+				var gameOverTexture = PIXI.Texture.fromImage("images/game-over.png");
+				var gameOver = new PIXI.Sprite(gameOverTexture);
+				gameOver.position.x = 260;
+				gameOver.position.y = 100;
+				stage.addChild(gameOver);
+				
+
+				var tryAgainTexture = PIXI.Texture.fromImage("images/try-again.png");
+				var tryAgain = new PIXI.Sprite(tryAgainTexture);
+				tryAgain.anchor.set(0.5);
+				tryAgain.scale.set(0.5);
+				tryAgain.interactive = true;
+				tryAgain.on('mouseover', buttonsMouseOver).on('mouseout', buttonsMouseOut).on('click',restartGame);
+				tryAgain.position.x = 570;
+				tryAgain.position.y = 300;
+				stage.addChild(tryAgain);
+
+				var exitTexture = PIXI.Texture.fromImage("images/exit-game.png");
+				var exit = new PIXI.Sprite(exitTexture);
+				exit.anchor.set(0.5);
+				exit.scale.set(0.5);
+				exit.interactive = true;
+				exit.on('mouseover', buttonsMouseOver).on('mouseout', buttonsMouseOut).on('click',exitGame);
+				exit.position.x = 570;
+				exit.position.y = 400;
+				stage.addChild(exit);
+
+				requestAnimationFrame(updateButtons);				
+
+			}
+
+			function buttonsMouseOver(event){
+				this.data = event.data;
+				this.scale.set(0.52);
+			}
+
+			function buttonsMouseOut(event){
+				this.data = event.data;
+				this.scale.set(0.5);
+
+			}
+
+			function restartGame(){
+				document.location.href = "game.html";
+			}
+
+			function exitGame(){
+				document.location.href = "index.html";
+			}
+
+
+			
 
 			function onDragEnd(){
 			    this.alpha = 1;
@@ -241,13 +330,19 @@
 				
 				
 				renderer.render(stage);
-
-				requestAnimationFrame(update);
-			
+				if(gameOver==false){
+					requestAnimationFrame(update);
+				}
 				
 			}
 
+			function updateButtons(){
+				renderer.render(stage);
+				requestAnimationFrame(updateButtons);
+			}
+
 			
-		</script>  
+		</script>
+		 
 	</body>
 </html>
