@@ -126,23 +126,25 @@ var p2_selected = false;
 	}
 
 	function p1Clicked(event){ //when player type 1 is selected
-		
-		this.data = event.data;
-		this.alpha = 1.0;
+		if(p2_selected== false){	
+			this.data = event.data;
+			this.alpha = 1.0;
 
-		p1_selected = p1_selected == false ? true : false;
-		p2_selected = false;
-		localStorage.setItem("playerType",'images/player.png'); //set the url for the image for retrieval in game.html
-			    	    
+			p1_selected = p1_selected == false ? true : false;
+			p2_selected = false;
+			localStorage.setItem("playerType",'images/player.png'); //set the url for the image for retrieval in game.html
+		}	    	    
 	}
 
 	function p2Clicked(event){ //when player 2 is clicked
+		if(p1_selected== false){
 		this.data = event.data;
 		this.alpha = 1.0;
 
 		p2_selected = p2_selected == false ? true : false;	    
 		p1_selected = false;
 		localStorage.setItem("playerType",'images/player2.png'); //set the url for the image for retrieval in game.html
+		}
 	}
 	
 
