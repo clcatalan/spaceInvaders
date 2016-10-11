@@ -1,0 +1,24 @@
+#overlay{
+	display: none;
+	position: fixed;
+	top: 0%;
+	left: 0%;
+	width: 100%;
+	height: 100%;			
+	background-color: black;
+	z-index:1001;
+}
+
+#overlay-content{ 
+	position: absolute;
+	display: none;
+	width: 1200px;
+	height: 600px;
+	padding: 16px;			
+	z-index:1002;
+}
+
+body{
+	background-color: black;
+}
+#menu-canvas { background-color: black; }
